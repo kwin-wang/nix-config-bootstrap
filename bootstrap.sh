@@ -384,11 +384,25 @@ if [ ! -f "$MACHINE_CONFIG" ]; then
     echo ""
 fi
 
-LOCAL_CONFIG="machines/${USER_HOSTNAME}.local.nix"
+# 使用部署目标的配置文件名（而不是本机 hostname）
+LOCAL_CONFIG="machines/${DEPLOY_HOSTNAME}.local.nix"
 
+# 检查配置文件是否已存在
+if [ -f "$LOCAL_CONFIG" ]; then
+    echo -e "${YELLOW}⚠️  配置文件已存在: ${LOCAL_CONFIG}${NC}"
+    read -p "$(echo -e ${BLUE}是否覆盖? [y/N]: ${NC})" -n 1 -r
+    echo
+    if [[ ! $REPLY =~ ^[Yy]$ ]]; then
+        echo -e "${GREEN}✓ 使用现有配置文件${NC}"
+        # 跳过生成，直接进入部署步骤
+        SKIP_CONFIG_GENERATION=true
+    fi
+fi
+
+if [ "${SKIP_CONFIG_GENERATION:-false}" != "true" ]; then
 # 生成配置文件内容
 cat > "$LOCAL_CONFIG" << EOF
-# ${USER_HOSTNAME} - 本地敏感配置
+# ${DEPLOY_HOSTNAME} - 本地敏感配置
 # 此文件由 bootstrap.sh 自动生成于 $(date '+%Y-%m-%d %H:%M:%S')
 # 此文件已被 .gitignore 忽略，不会提交到 git
 
@@ -488,10 +502,11 @@ cat >> "$LOCAL_CONFIG" << 'EOF'
 EOF
 
 echo -e "${GREEN}✓ 配置文件已生成: ${LOCAL_CONFIG}${NC}"
+fi  # end of SKIP_CONFIG_GENERATION check
 echo ""
 
-# 显示生成的配置
-echo -e "${CYAN}生成的配置内容：${NC}"
+# 显示配置内容（无论是新生成的还是现有的）
+echo -e "${CYAN}配置内容：${NC}"
 echo -e "${YELLOW}----------------------------------------${NC}"
 cat "$LOCAL_CONFIG"
 echo -e "${YELLOW}----------------------------------------${NC}"

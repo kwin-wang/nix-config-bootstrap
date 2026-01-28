@@ -58,6 +58,7 @@ cd nix-config-bootstrap
 **你需要准备**：
 1. ✅ **1Password 账户**：确保你能登录 1Password
 2. ✅ **SSH 密钥已上传到 1Password**
+3. ✅ **Surge 代理配置**（可选，推荐中国用户）：准备好代理配置文件
 
 **脚本会询问你**：
 - 用户名（默认自动检测）
@@ -79,19 +80,24 @@ cd nix-config-bootstrap
 2. **安装 Homebrew**（如果未安装）
    - 支持 Intel 和 Apple Silicon
 
-3. **安装 1Password + 1Password CLI**
+3. **安装 Surge**（网络代理工具，优先安装）
+   - 通过 Homebrew Cask 安装
+   - 提示用户配置代理
+   - 避免后续步骤的网络问题
+
+4. **安装 1Password + 1Password CLI**
    - 通过 Homebrew Cask 安装
 
-4. **等待用户配置 1Password**
+5. **等待用户配置 1Password**
    - 提示用户登录 1Password
    - 启用 SSH Agent（Settings → Developer）
    - 验证 SSH 密钥可用
 
-5. **克隆私密配置仓库**
+6. **克隆私密配置仓库**
    - 使用 1Password SSH Agent 认证
    - 克隆到 `~/nix-config`
 
-6. **交互式收集配置信息**
+7. **交互式收集配置信息**
    - 用户名（默认使用 `whoami`）
    - 邮箱地址
    - 主机名（默认使用 `hostname -s`）
@@ -99,12 +105,12 @@ cd nix-config-bootstrap
    - SSH 签名密钥（可选，自动从 1Password 获取）
    - AI 工具配置（可选）
 
-7. **自动生成配置文件**
+8. **自动生成配置文件**
    - 生成 `machines/<hostname>.local.nix`
    - 显示配置内容供确认
    - 支持手动修改
 
-8. **执行完整部署**
+9. **执行完整部署**
    - 运行 `nix run nix-darwin -- switch --flake .#<hostname>`
    - 部署所有 Nix 配置
 
@@ -112,7 +118,29 @@ cd nix-config-bootstrap
 
 脚本会在以下关键点暂停，等待用户手动操作：
 
-### 1. 配置 1Password SSH Agent
+### 1. 配置 Surge 代理（推荐）
+
+**适用场景**：中国网络环境，或需要代理访问 GitHub
+
+```
+⚠️  请配置 Surge 代理：
+1. 打开 Surge 应用
+2. 导入你的代理配置
+3. 启用代理（Set as System Proxy）
+4. 建议启用 Enhanced Mode 以代理所有流量
+```
+
+**为什么优先安装 Surge？**
+- ✅ 避免 Nix 依赖下载失败
+- ✅ 避免 Git 克隆超时
+- ✅ 加速 Homebrew 包安装
+- ✅ 确保后续部署顺畅
+
+**没有 Surge？**
+- 可以跳过此步骤，但可能遇到网络问题
+- 或者使用其他代理工具（如 ClashX、V2rayU）
+
+### 2. 配置 1Password SSH Agent
 
 ```
 ⚠️  请手动完成以下步骤：
@@ -122,7 +150,7 @@ cd nix-config-bootstrap
 4. 验证密钥：运行 ssh-add -l
 ```
 
-### 2. 交互式配置信息收集
+### 3. 交互式配置信息收集
 
 脚本会逐步询问你的配置信息：
 
@@ -152,7 +180,7 @@ cd nix-config-bootstrap
 是否配置 AI 工具? [y/N]: n
 ```
 
-### 3. 自动生成配置文件
+### 4. 自动生成配置文件
 
 脚本会根据你的输入自动生成 `machines/<hostname>.local.nix`：
 

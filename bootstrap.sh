@@ -1,6 +1,11 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+# 确保交互式输入可用（支持 curl | bash 方式运行）
+if [ ! -t 0 ]; then
+    exec < /dev/tty
+fi
+
 # 颜色输出
 RED='\033[0;31m'
 GREEN='\033[0;32m'

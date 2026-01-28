@@ -529,13 +529,15 @@ echo ""
 
 read -p "$(echo -e ${GREEN}按回车开始部署...${NC})"
 
-# 使用 nix-darwin 部署（需要 sudo 权限修改系统配置）
+# 使用 nix-darwin 部署
+# 不使用 sudo 运行 nix 命令，darwin-rebuild 会在需要时自己请求 sudo 权限
 if command -v darwin-rebuild &> /dev/null; then
     # 如果已经安装过 nix-darwin
-    sudo darwin-rebuild switch --flake ".#${DEPLOY_HOSTNAME}"
+    darwin-rebuild switch --flake ".#${DEPLOY_HOSTNAME}"
 else
     # 首次安装 nix-darwin
-    sudo nix run nix-darwin -- switch --flake ".#${DEPLOY_HOSTNAME}"
+    # 以普通用户运行 nix run，darwin-rebuild switch 内部会处理 sudo
+    nix run nix-darwin -- switch --flake ".#${DEPLOY_HOSTNAME}"
 fi
 
 # 步骤9: 完成

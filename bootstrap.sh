@@ -17,6 +17,7 @@ NC='\033[0m' # No Color
 # 配置变量
 PRIVATE_REPO_URL="git@github.com:kwin-wang/nix-config.git"
 CONFIG_DIR="$HOME/nix-config"
+OP_SSH_SOCK="$HOME/Library/Group Containers/2BUA8C4S2C.com.1password/t/agent.sock"
 
 # 用户配置变量（将通过交互式输入收集）
 USER_NAME=""
@@ -200,7 +201,7 @@ echo "2. 登录你的 1Password 账户"
 echo "3. 在 1Password 中启用 SSH Agent："
 echo "   Settings → Developer → Use the SSH agent (勾选)"
 echo "4. 验证 SSH 密钥可用："
-echo "   运行: ${BLUE}ssh-add -l${NC}"
+echo "   运行: ${BLUE}SSH_AUTH_SOCK=\"\$HOME/Library/Group Containers/2BUA8C4S2C.com.1password/t/agent.sock\" ssh-add -l${NC}"
 echo "   应该能看到你的 SSH 密钥列表"
 echo ""
 
@@ -209,20 +210,23 @@ open /Applications/1Password.app 2>/dev/null || true
 
 read -p "$(echo -e ${GREEN}完成后按回车继续...${NC})"
 
-# 验证 SSH Agent
+# 验证 1Password SSH Agent
 echo ""
-echo -e "${BLUE}🔍 验证 SSH Agent...${NC}"
-if ssh-add -l &> /dev/null; then
-    echo -e "${GREEN}✓ SSH Agent 已配置，密钥列表：${NC}"
-    ssh-add -l
+echo -e "${BLUE}🔍 验证 1Password SSH Agent...${NC}"
+if SSH_AUTH_SOCK="$OP_SSH_SOCK" ssh-add -l &> /dev/null; then
+    echo -e "${GREEN}✓ 1Password SSH Agent 已配置，密钥列表：${NC}"
+    SSH_AUTH_SOCK="$OP_SSH_SOCK" ssh-add -l
 else
-    echo -e "${RED}✗ SSH Agent 未正确配置${NC}"
+    echo -e "${RED}✗ 1Password SSH Agent 未正确配置${NC}"
     echo -e "${YELLOW}请确保：${NC}"
     echo "  1. 1Password 已登录"
     echo "  2. SSH Agent 已在 1Password 设置中启用"
     echo "  3. 你的 SSH 密钥已添加到 1Password"
     exit 1
 fi
+
+# 设置 SSH_AUTH_SOCK 供后续 git clone 使用
+export SSH_AUTH_SOCK="$OP_SSH_SOCK"
 
 # 步骤5: 克隆私密配置仓库
 echo ""
@@ -299,21 +303,21 @@ if [[ $REPLY =~ ^[Yy]$ ]]; then
     echo "1. 从 1Password 复制："
     echo "   打开 1Password → SSH Keys → 复制公钥"
     echo ""
-    echo "2. 从命令行查看（如果密钥在 1Password 中）："
-    echo "   ssh-add -L"
+    echo "2. 从命令行查看（1Password SSH Agent）："
+    echo "   SSH_AUTH_SOCK=\"\$HOME/Library/Group Containers/2BUA8C4S2C.com.1password/t/agent.sock\" ssh-add -L"
     echo ""
     echo "3. 从本地文件读取（如果有本地密钥）："
     echo "   cat ~/.ssh/id_ed25519.pub  # 或 id_rsa.pub"
     echo ""
 
-    # 尝试自动获取
-    if ssh-add -L &> /dev/null; then
+    # 尝试从 1Password SSH Agent 自动获取
+    if SSH_AUTH_SOCK="$OP_SSH_SOCK" ssh-add -L &> /dev/null; then
         echo -e "${YELLOW}检测到以下 SSH 公钥：${NC}"
-        ssh-add -L | nl
+        SSH_AUTH_SOCK="$OP_SSH_SOCK" ssh-add -L | nl
         echo ""
         read -p "$(echo -e ${BLUE}请选择密钥编号 [1]: ${NC})" KEY_NUM
         KEY_NUM=${KEY_NUM:-1}
-        USER_SIGNING_KEY=$(ssh-add -L | sed -n "${KEY_NUM}p")
+        USER_SIGNING_KEY=$(SSH_AUTH_SOCK="$OP_SSH_SOCK" ssh-add -L | sed -n "${KEY_NUM}p")
         echo -e "${GREEN}✓ 已选择密钥: ${USER_SIGNING_KEY:0:50}...${NC}"
     else
         read -p "$(echo -e ${BLUE}请粘贴 SSH 公钥: ${NC})" USER_SIGNING_KEY

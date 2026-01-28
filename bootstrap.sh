@@ -50,25 +50,88 @@ if [ -d "/Applications/Surge.app" ]; then
     fi
 else
     echo -e "${YELLOW}========================================${NC}"
-    echo -e "${YELLOW}⚠️  重要提示：建议先安装网络代理${NC}"
+    echo -e "${YELLOW}⚠️  Surge 未安装${NC}"
     echo -e "${YELLOW}========================================${NC}"
     echo ""
     echo -e "${CYAN}由于后续步骤需要从网络下载大量内容，${NC}"
-    echo -e "${CYAN}建议先安装并配置 Surge 等代理工具。${NC}"
-    echo ""
-    echo -e "${BLUE}下载 Surge:${NC}"
-    echo "  1. 访问官网: https://nssurge.com/"
-    echo "  2. 或使用其他代理工具（ClashX、V2rayU 等）"
-    echo ""
-    echo -e "${BLUE}安装后请：${NC}"
-    echo "  1. 导入你的代理配置"
-    echo "  2. 启用系统代理（Set as System Proxy）"
-    echo "  3. 启用 Enhanced Mode（推荐）"
-    echo ""
-    echo -e "${YELLOW}如果你在海外或网络良好，可以跳过此步骤。${NC}"
+    echo -e "${CYAN}强烈建议先安装并配置 Surge 代理工具。${NC}"
     echo ""
 
-    read -p "$(echo -e ${GREEN}已安装并配置好代理？按回车继续，或 Ctrl+C 退出安装代理后再运行...${NC})"
+    read -p "$(echo -e ${BLUE}是否自动下载并安装 Surge? [Y/n]: ${NC})" -n 1 -r
+    echo
+
+    if [[ ! $REPLY =~ ^[Nn]$ ]]; then
+        echo -e "${YELLOW}🌐 开始下载 Surge...${NC}"
+
+        # 创建临时目录
+        TEMP_DIR=$(mktemp -d)
+        SURGE_ZIP="$TEMP_DIR/Surge.zip"
+
+        # 下载 Surge
+        if curl -L -o "$SURGE_ZIP" "https://dl.nssurge.com/mac/v6/Surge-latest.zip"; then
+            echo -e "${GREEN}✓ Surge 下载完成${NC}"
+
+            # 解压到临时目录
+            echo -e "${YELLOW}📦 解压 Surge...${NC}"
+            unzip -q "$SURGE_ZIP" -d "$TEMP_DIR"
+
+            # 移动到 Applications
+            echo -e "${YELLOW}📁 安装 Surge 到 /Applications...${NC}"
+            if [ -d "$TEMP_DIR/Surge.app" ]; then
+                cp -R "$TEMP_DIR/Surge.app" /Applications/
+                echo -e "${GREEN}✓ Surge 安装完成${NC}"
+
+                # 清理临时文件
+                rm -rf "$TEMP_DIR"
+
+                # 打开 Surge
+                echo -e "${YELLOW}🚀 启动 Surge...${NC}"
+                open -a "Surge"
+
+                echo ""
+                echo -e "${YELLOW}========================================${NC}"
+                echo -e "${YELLOW}⚠️  请配置 Surge 代理${NC}"
+                echo -e "${YELLOW}========================================${NC}"
+                echo "1. Surge 已启动，请在应用中："
+                echo "   - 导入你的代理配置文件"
+                echo "   - 或手动配置代理规则"
+                echo ""
+                echo "2. 启用系统代理："
+                echo "   - 点击 'Set as System Proxy'"
+                echo ""
+                echo "3. 建议启用 Enhanced Mode（可选）"
+                echo ""
+                echo -e "${CYAN}提示：首次使用需要授予 Surge 系统权限${NC}"
+                echo ""
+
+                read -p "$(echo -e ${GREEN}配置完成后按回车继续...${NC})"
+                echo ""
+            else
+                echo -e "${RED}✗ 解压失败，未找到 Surge.app${NC}"
+                rm -rf "$TEMP_DIR"
+                echo -e "${YELLOW}请手动下载安装：https://nssurge.com/${NC}"
+                read -p "$(echo -e ${GREEN}手动安装完成后按回车继续...${NC})"
+            fi
+        else
+            echo -e "${RED}✗ Surge 下载失败${NC}"
+            rm -rf "$TEMP_DIR"
+            echo ""
+            echo -e "${YELLOW}备选方案：${NC}"
+            echo "1. 手动下载：https://dl.nssurge.com/mac/v6/Surge-latest.zip"
+            echo "2. 访问官网：https://nssurge.com/"
+            echo "3. 使用其他代理工具（ClashX、V2rayU）"
+            echo ""
+            read -p "$(echo -e ${GREEN}手动安装完成后按回车继续...${NC})"
+        fi
+    else
+        echo ""
+        echo -e "${YELLOW}跳过 Surge 安装${NC}"
+        echo -e "${CYAN}备选方案：${NC}"
+        echo "1. 使用其他代理工具（ClashX、V2rayU）"
+        echo "2. 如果在海外或网络良好，可直接继续"
+        echo ""
+        read -p "$(echo -e ${GREEN}按回车继续...${NC})"
+    fi
     echo ""
 fi
 

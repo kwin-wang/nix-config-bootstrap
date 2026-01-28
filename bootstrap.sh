@@ -43,7 +43,7 @@ if [ -d "/Applications/Surge.app" ]; then
         read -p "$(echo -e ${BLUE}是否启动 Surge 以获得更好的网络体验? [Y/n]: ${NC})" -n 1 -r
         echo
         if [[ ! $REPLY =~ ^[Nn]$ ]]; then
-            open -a "Surge"
+            open /Applications/Surge.app
             echo -e "${GREEN}✓ 已启动 Surge，等待 3 秒以确保代理生效...${NC}"
             sleep 3
         fi
@@ -86,7 +86,7 @@ else
 
                 # 打开 Surge
                 echo -e "${YELLOW}🚀 启动 Surge...${NC}"
-                open -a "Surge"
+                open /Applications/Surge.app
 
                 echo ""
                 echo -e "${YELLOW}========================================${NC}"
@@ -200,7 +200,7 @@ echo "   应该能看到你的 SSH 密钥列表"
 echo ""
 
 # 尝试打开 1Password
-open -a "1Password" 2>/dev/null || true
+open /Applications/1Password.app 2>/dev/null || true
 
 read -p "$(echo -e ${GREEN}完成后按回车继续...${NC})"
 

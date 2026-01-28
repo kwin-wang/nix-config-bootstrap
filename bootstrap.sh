@@ -350,17 +350,38 @@ echo ""
 
 # 检查机器配置文件是否存在
 MACHINE_CONFIG="machines/${USER_HOSTNAME}.nix"
+DEPLOY_HOSTNAME="$USER_HOSTNAME"
+
 if [ ! -f "$MACHINE_CONFIG" ]; then
     echo -e "${YELLOW}⚠️  警告: 未找到机器配置文件 ${MACHINE_CONFIG}${NC}"
-    echo -e "${YELLOW}可用的机器配置：${NC}"
-    ls -1 machines/*.nix | grep -v ".local.nix" | sed 's/machines\//  - /'
     echo ""
-    read -p "$(echo -e ${YELLOW}是否继续? 你可能需要稍后创建机器配置文件 [Y/n]: ${NC})" -n 1 -r
-    echo
-    if [[ $REPLY =~ ^[Nn]$ ]]; then
-        echo -e "${RED}部署已取消${NC}"
+    echo -e "${CYAN}可用的机器配置：${NC}"
+
+    # 列出可用的机器配置
+    AVAILABLE_MACHINES=($(ls -1 machines/*.nix 2>/dev/null | grep -v ".local.nix" | sed 's/machines\///' | sed 's/\.nix$//'))
+
+    if [ ${#AVAILABLE_MACHINES[@]} -eq 0 ]; then
+        echo -e "${RED}错误: 没有找到任何机器配置文件${NC}"
         exit 1
     fi
+
+    for i in "${!AVAILABLE_MACHINES[@]}"; do
+        echo "  $((i+1)). ${AVAILABLE_MACHINES[$i]}"
+    done
+    echo ""
+
+    read -p "$(echo -e ${BLUE}请选择要使用的机器配置编号 [1]: ${NC})" MACHINE_NUM
+    MACHINE_NUM=${MACHINE_NUM:-1}
+
+    # 验证输入
+    if ! [[ "$MACHINE_NUM" =~ ^[0-9]+$ ]] || [ "$MACHINE_NUM" -lt 1 ] || [ "$MACHINE_NUM" -gt ${#AVAILABLE_MACHINES[@]} ]; then
+        echo -e "${RED}无效的选择${NC}"
+        exit 1
+    fi
+
+    DEPLOY_HOSTNAME="${AVAILABLE_MACHINES[$((MACHINE_NUM-1))]}"
+    echo -e "${GREEN}✓ 将使用配置: ${DEPLOY_HOSTNAME}${NC}"
+    echo ""
 fi
 
 LOCAL_CONFIG="machines/${USER_HOSTNAME}.local.nix"
@@ -496,10 +517,10 @@ read -p "$(echo -e ${GREEN}按回车开始部署...${NC})"
 # 使用 nix-darwin 部署（需要 sudo 权限修改系统配置）
 if command -v darwin-rebuild &> /dev/null; then
     # 如果已经安装过 nix-darwin
-    sudo darwin-rebuild switch --flake ".#${USER_HOSTNAME}"
+    sudo darwin-rebuild switch --flake ".#${DEPLOY_HOSTNAME}"
 else
     # 首次安装 nix-darwin
-    sudo nix run nix-darwin -- switch --flake ".#${USER_HOSTNAME}"
+    sudo nix run nix-darwin -- switch --flake ".#${DEPLOY_HOSTNAME}"
 fi
 
 # 步骤9: 完成
@@ -511,12 +532,17 @@ echo ""
 echo -e "${CYAN}配置摘要：${NC}"
 echo "  用户名: ${USER_NAME}"
 echo "  邮箱: ${USER_EMAIL}"
-echo "  主机名: ${USER_HOSTNAME}"
+echo "  本机主机名: ${USER_HOSTNAME}"
+echo "  部署配置: ${DEPLOY_HOSTNAME}"
 echo "  系统架构: ${USER_SYSTEM}"
 echo "  配置文件: ${CONFIG_DIR}/darwin/${LOCAL_CONFIG}"
 echo ""
 echo -e "${BLUE}后续管理命令（在 $CONFIG_DIR/darwin 目录下）：${NC}"
-echo "  just darwin              # 应用配置更改"
+if [ "$USER_HOSTNAME" != "$DEPLOY_HOSTNAME" ]; then
+    echo "  just darwin-for ${DEPLOY_HOSTNAME}  # 应用配置更改（本机使用其他机器配置）"
+else
+    echo "  just darwin              # 应用配置更改"
+fi
 echo "  just darwin-with-proxy   # 使用代理部署"
 echo "  just up                  # 更新所有依赖"
 echo "  just clean               # 清理旧版本"

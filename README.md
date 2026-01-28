@@ -16,7 +16,19 @@
 2. 安装 1Password（用于访问 SSH 密钥）
 3. 配置 SSH Agent
 4. 克隆你的私密配置仓库
-5. 执行完整的 Nix 配置部署
+5. **交互式收集配置信息**（用户名、邮箱、SSH密钥等）
+6. **自动生成配置文件**
+7. 执行完整的 Nix 配置部署
+
+## ✨ 核心特性
+
+- 🚀 **一键部署**：单条命令完成所有设置
+- 🤖 **全自动化**：自动安装依赖、配置环境
+- 💬 **交互式配置**：友好的问答式收集信息
+- 🔑 **1Password 集成**：安全管理 SSH 密钥和签名
+- 🎨 **彩色输出**：清晰的进度提示和错误信息
+- ⚙️ **智能检测**：自动检测系统架构、主机名等
+- 📝 **自动生成配置**：根据输入生成 Nix 配置文件
 
 ## 🚀 快速开始
 
@@ -39,19 +51,22 @@ cd nix-config-bootstrap
 ./bootstrap.sh
 ```
 
-### 配置前准备
+### ✨ 全自动化配置
 
-在运行脚本前，你需要：
+脚本会**交互式收集**你的配置信息，无需手动编辑配置文件！
 
+**你需要准备**：
 1. ✅ **1Password 账户**：确保你能登录 1Password
 2. ✅ **SSH 密钥已上传到 1Password**
-3. ✅ **私密仓库地址**：修改 `bootstrap.sh` 中的 `PRIVATE_REPO_URL`
 
-编辑 `bootstrap.sh` 第 12 行：
+**脚本会询问你**：
+- 用户名（默认自动检测）
+- 邮箱地址
+- 主机名（默认自动检测）
+- 是否配置 SSH 签名密钥
+- 是否配置 AI 工具
 
-```bash
-PRIVATE_REPO_URL="git@github.com:kwin-wang/nix-config.git"  # 改为你的仓库
-```
+所有信息收集后，脚本会自动生成配置文件并部署！
 
 ## 📋 脚本执行步骤
 
@@ -76,12 +91,21 @@ PRIVATE_REPO_URL="git@github.com:kwin-wang/nix-config.git"  # 改为你的仓库
    - 使用 1Password SSH Agent 认证
    - 克隆到 `~/nix-config`
 
-6. **配置 flake.local.nix**
-   - 从示例文件创建
-   - 提示用户填写个人信息
+6. **交互式收集配置信息**
+   - 用户名（默认使用 `whoami`）
+   - 邮箱地址
+   - 主机名（默认使用 `hostname -s`）
+   - 系统架构（自动检测 Apple Silicon 或 Intel）
+   - SSH 签名密钥（可选，自动从 1Password 获取）
+   - AI 工具配置（可选）
 
-7. **执行完整部署**
-   - 运行 `nix run nix-darwin -- switch --flake .`
+7. **自动生成配置文件**
+   - 生成 `machines/<hostname>.local.nix`
+   - 显示配置内容供确认
+   - 支持手动修改
+
+8. **执行完整部署**
+   - 运行 `nix run nix-darwin -- switch --flake .#<hostname>`
    - 部署所有 Nix 配置
 
 ## ⚙️ 手动步骤
@@ -98,18 +122,47 @@ PRIVATE_REPO_URL="git@github.com:kwin-wang/nix-config.git"  # 改为你的仓库
 4. 验证密钥：运行 ssh-add -l
 ```
 
-### 2. 编辑 flake.local.nix
+### 2. 交互式配置信息收集
+
+脚本会逐步询问你的配置信息：
 
 ```
-⚠️  请编辑配置文件：
-  文件路径: ~/nix-config/darwin/flake.local.nix
+📝 配置信息收集
+========================================
 
-  需要填写：
-    - username: 你的用户名
-    - useremail: 你的邮箱
-    - hostname: 当前机器的主机名
-    - system: 系统架构 (aarch64-darwin 或 x86_64-darwin)
-    - signingkey: (可选) 1Password SSH 公钥
+请输入用户名 [默认: your-username]:
+✓ 用户名: your-username
+
+请输入邮箱（用于 Git 配置）: user@example.com
+✓ 邮箱: user@example.com
+
+请输入主机名 [默认: MacBook-Pro]:
+✓ 主机名: MacBook-Pro
+
+✓ 系统架构: aarch64-darwin (自动检测)
+
+可选配置：Git SSH 签名
+是否配置 SSH 签名密钥? [y/N]: y
+检测到以下 SSH 公钥：
+  1  ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAI...
+请选择密钥编号 [1]: 1
+✓ 已选择密钥
+
+可选配置：AI 工具（Claude Code、Codex 等）
+是否配置 AI 工具? [y/N]: n
+```
+
+### 3. 自动生成配置文件
+
+脚本会根据你的输入自动生成 `machines/<hostname>.local.nix`：
+
+```nix
+{
+  username = "your-username";
+  useremail = "user@example.com";
+  signingkey = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAI...";
+  # ... 其他可选配置
+}
 ```
 
 ## 🔧 自定义配置

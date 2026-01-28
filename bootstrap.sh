@@ -143,12 +143,12 @@ fi
 
 # 步骤1: 检查并安装 Nix
 if ! command -v nix &> /dev/null; then
-    echo -e "${YELLOW}📦 Nix 未安装，开始安装...${NC}"
-    curl --proto '=https' --tlsv1.2 -sSf -L https://install.determinate.systems/nix | sh -s -- install
+    echo -e "${YELLOW}📦 Nix 未安装，开始安装（官方多用户安装）...${NC}"
+    sh <(curl -L https://nixos.org/nix/install) --daemon
 
     echo -e "${GREEN}✓ Nix 安装完成${NC}"
     echo -e "${YELLOW}⚠️  请重新启动终端或运行以下命令加载 Nix 环境：${NC}"
-    echo -e "  source /nix/var/nix/profiles/default/etc/profile.d/nix-daemon.sh"
+    echo -e "  . /nix/var/nix/profiles/default/etc/profile.d/nix-daemon.sh"
     echo ""
     echo -e "${YELLOW}然后重新运行此脚本。${NC}"
     exit 0

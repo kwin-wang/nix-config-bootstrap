@@ -56,9 +56,12 @@ cd nix-config-bootstrap
 脚本会**交互式收集**你的配置信息，无需手动编辑配置文件！
 
 **你需要准备**：
-1. ✅ **1Password 账户**：确保你能登录 1Password
-2. ✅ **SSH 密钥已上传到 1Password**
-3. ✅ **Surge 代理配置**（可选，推荐中国用户）：准备好代理配置文件
+1. ✅ **网络代理**（强烈推荐，中国用户必需）：
+   - 提前安装并配置 Surge、ClashX 或 V2rayU
+   - 在运行脚本前启动代理
+   - 避免 Nix、Homebrew 安装失败
+2. ✅ **1Password 账户**：确保你能登录 1Password
+3. ✅ **SSH 密钥已上传到 1Password**
 
 **脚本会询问你**：
 - 用户名（默认自动检测）
@@ -73,31 +76,35 @@ cd nix-config-bootstrap
 
 脚本会自动完成以下步骤：
 
+0. **网络代理检查**（⭐ 最重要）
+   - 检查 Surge 是否已安装并运行
+   - 如未安装，提示用户先安装代理工具
+   - 建议访问 https://nssurge.com/ 下载
+   - 或使用其他代理（ClashX、V2rayU）
+
 1. **安装 Nix**（如果未安装）
    - 使用 Determinate Systems 安装器
    - 自动配置 Nix 守护进程
+   - **需要网络连接**
 
 2. **安装 Homebrew**（如果未安装）
    - 支持 Intel 和 Apple Silicon
+   - **需要网络连接**
 
-3. **安装 Surge**（网络代理工具，优先安装）
-   - 通过 Homebrew Cask 安装
-   - 提示用户配置代理
-   - 避免后续步骤的网络问题
-
-4. **安装 1Password + 1Password CLI**
+3. **安装 1Password + 1Password CLI**
    - 通过 Homebrew Cask 安装
 
-5. **等待用户配置 1Password**
+4. **等待用户配置 1Password**
    - 提示用户登录 1Password
    - 启用 SSH Agent（Settings → Developer）
    - 验证 SSH 密钥可用
 
-6. **克隆私密配置仓库**
+5. **克隆私密配置仓库**
    - 使用 1Password SSH Agent 认证
    - 克隆到 `~/nix-config`
+   - **需要网络连接**
 
-7. **交互式收集配置信息**
+6. **交互式收集配置信息**
    - 用户名（默认使用 `whoami`）
    - 邮箱地址
    - 主机名（默认使用 `hostname -s`）
@@ -105,42 +112,58 @@ cd nix-config-bootstrap
    - SSH 签名密钥（可选，自动从 1Password 获取）
    - AI 工具配置（可选）
 
-8. **自动生成配置文件**
+7. **自动生成配置文件**
    - 生成 `machines/<hostname>.local.nix`
    - 显示配置内容供确认
    - 支持手动修改
 
-9. **执行完整部署**
+8. **执行完整部署**
    - 运行 `nix run nix-darwin -- switch --flake .#<hostname>`
    - 部署所有 Nix 配置
+   - **需要网络连接**
 
 ## ⚙️ 手动步骤
 
 脚本会在以下关键点暂停，等待用户手动操作：
 
-### 1. 配置 Surge 代理（推荐）
+### 0. 提前安装网络代理（⭐ 强烈推荐）
 
-**适用场景**：中国网络环境，或需要代理访问 GitHub
+**为什么必须先安装代理？**
 
-```
-⚠️  请配置 Surge 代理：
-1. 打开 Surge 应用
+脚本需要从网络下载大量内容，包括：
+- Nix 安装器和依赖包
+- Homebrew 安装脚本
+- Git 克隆私密仓库
+- Nix 包和 Homebrew 软件
+
+**如果没有代理（中国网络环境）**：
+- ❌ Nix 安装失败或超时
+- ❌ Homebrew 安装失败
+- ❌ Git 克隆超时
+- ❌ 部署过程中断
+
+**推荐代理工具**：
+1. **Surge**（推荐）
+   - 下载：https://nssurge.com/
+   - 功能强大，支持复杂规则
+
+2. **ClashX**
+   - 开源免费
+   - 适合新手
+
+3. **V2rayU**
+   - 轻量级
+   - 配置简单
+
+**安装步骤**：
+1. 下载并安装代理工具
 2. 导入你的代理配置
-3. 启用代理（Set as System Proxy）
-4. 建议启用 Enhanced Mode 以代理所有流量
-```
+3. 启用系统代理（Set as System Proxy）
+4. 启用增强模式（Enhanced Mode，如果有）
+5. **确保代理正在运行**
+6. 然后运行引导脚本
 
-**为什么优先安装 Surge？**
-- ✅ 避免 Nix 依赖下载失败
-- ✅ 避免 Git 克隆超时
-- ✅ 加速 Homebrew 包安装
-- ✅ 确保后续部署顺畅
-
-**没有 Surge？**
-- 可以跳过此步骤，但可能遇到网络问题
-- 或者使用其他代理工具（如 ClashX、V2rayU）
-
-### 2. 配置 1Password SSH Agent
+### 1. 配置 1Password SSH Agent
 
 ```
 ⚠️  请手动完成以下步骤：
@@ -150,7 +173,7 @@ cd nix-config-bootstrap
 4. 验证密钥：运行 ssh-add -l
 ```
 
-### 3. 交互式配置信息收集
+### 2. 交互式配置信息收集
 
 脚本会逐步询问你的配置信息：
 
@@ -180,7 +203,7 @@ cd nix-config-bootstrap
 是否配置 AI 工具? [y/N]: n
 ```
 
-### 4. 自动生成配置文件
+### 3. 自动生成配置文件
 
 脚本会根据你的输入自动生成 `machines/<hostname>.local.nix`：
 

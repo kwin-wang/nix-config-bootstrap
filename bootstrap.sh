@@ -26,6 +26,52 @@ echo -e "${BLUE}🚀 macOS Nix 配置冷启动脚本${NC}"
 echo -e "${BLUE}========================================${NC}"
 echo ""
 
+# 步骤0: 检查 Surge（在所有网络操作之前）
+echo -e "${CYAN}========================================${NC}"
+echo -e "${CYAN}🌐 网络代理检查${NC}"
+echo -e "${CYAN}========================================${NC}"
+echo ""
+
+if [ -d "/Applications/Surge.app" ]; then
+    echo -e "${GREEN}✓ Surge 已安装${NC}"
+
+    # 检查是否在运行
+    if pgrep -x "Surge" > /dev/null; then
+        echo -e "${GREEN}✓ Surge 正在运行${NC}"
+    else
+        echo -e "${YELLOW}⚠️  Surge 未运行${NC}"
+        read -p "$(echo -e ${BLUE}是否启动 Surge 以获得更好的网络体验? [Y/n]: ${NC})" -n 1 -r
+        echo
+        if [[ ! $REPLY =~ ^[Nn]$ ]]; then
+            open -a "Surge"
+            echo -e "${GREEN}✓ 已启动 Surge，等待 3 秒以确保代理生效...${NC}"
+            sleep 3
+        fi
+    fi
+else
+    echo -e "${YELLOW}========================================${NC}"
+    echo -e "${YELLOW}⚠️  重要提示：建议先安装网络代理${NC}"
+    echo -e "${YELLOW}========================================${NC}"
+    echo ""
+    echo -e "${CYAN}由于后续步骤需要从网络下载大量内容，${NC}"
+    echo -e "${CYAN}建议先安装并配置 Surge 等代理工具。${NC}"
+    echo ""
+    echo -e "${BLUE}下载 Surge:${NC}"
+    echo "  1. 访问官网: https://nssurge.com/"
+    echo "  2. 或使用其他代理工具（ClashX、V2rayU 等）"
+    echo ""
+    echo -e "${BLUE}安装后请：${NC}"
+    echo "  1. 导入你的代理配置"
+    echo "  2. 启用系统代理（Set as System Proxy）"
+    echo "  3. 启用 Enhanced Mode（推荐）"
+    echo ""
+    echo -e "${YELLOW}如果你在海外或网络良好，可以跳过此步骤。${NC}"
+    echo ""
+
+    read -p "$(echo -e ${GREEN}已安装并配置好代理？按回车继续，或 Ctrl+C 退出安装代理后再运行...${NC})"
+    echo ""
+fi
+
 # 步骤1: 检查并安装 Nix
 if ! command -v nix &> /dev/null; then
     echo -e "${YELLOW}📦 Nix 未安装，开始安装...${NC}"
@@ -58,47 +104,7 @@ else
     echo -e "${GREEN}✓ Homebrew 已安装${NC}"
 fi
 
-# 步骤3: 安装 Surge（代理软件，优先安装以避免网络问题）
-echo ""
-if ! [ -d "/Applications/Surge.app" ]; then
-    echo -e "${YELLOW}🌐 安装 Surge（网络代理工具）...${NC}"
-    echo -e "${CYAN}注意：Surge 可以帮助解决后续步骤的网络问题${NC}"
-    brew install --cask surge
-    echo -e "${GREEN}✓ Surge 安装完成${NC}"
-    echo ""
-    echo -e "${YELLOW}========================================${NC}"
-    echo -e "${YELLOW}⚠️  请配置 Surge 代理：${NC}"
-    echo -e "${YELLOW}========================================${NC}"
-    echo "1. 打开 Surge 应用（已自动启动或请从 Launchpad 启动）"
-    echo "2. 导入你的代理配置"
-    echo "3. 启用代理（Set as System Proxy）"
-    echo "4. 建议启用 Enhanced Mode 以代理所有流量"
-    echo ""
-
-    # 尝试打开 Surge
-    open -a "Surge" 2>/dev/null || true
-
-    read -p "$(echo -e ${GREEN}配置完成后按回车继续...${NC})"
-    echo ""
-else
-    echo -e "${GREEN}✓ Surge 已安装${NC}"
-
-    # 检查 Surge 是否在运行
-    if pgrep -x "Surge" > /dev/null; then
-        echo -e "${GREEN}✓ Surge 正在运行${NC}"
-    else
-        echo -e "${YELLOW}⚠️  Surge 未运行，建议启动以获得更好的网络体验${NC}"
-        read -p "$(echo -e ${BLUE}是否启动 Surge? [Y/n]: ${NC})" -n 1 -r
-        echo
-        if [[ ! $REPLY =~ ^[Nn]$ ]]; then
-            open -a "Surge"
-            echo -e "${GREEN}✓ 已启动 Surge${NC}"
-            sleep 2
-        fi
-    fi
-fi
-
-# 步骤4: 安装 1Password
+# 步骤3: 安装 1Password
 echo ""
 if ! [ -d "/Applications/1Password.app" ]; then
     echo -e "${YELLOW}🔑 安装 1Password...${NC}"
@@ -116,7 +122,7 @@ else
     echo -e "${GREEN}✓ 1Password CLI 已安装${NC}"
 fi
 
-# 步骤5: 等待用户配置 1Password
+# 步骤4: 等待用户配置 1Password
 echo ""
 echo -e "${YELLOW}========================================${NC}"
 echo -e "${YELLOW}⚠️  请手动完成以下步骤：${NC}"
@@ -150,7 +156,7 @@ else
     exit 1
 fi
 
-# 步骤6: 克隆私密配置仓库
+# 步骤5: 克隆私密配置仓库
 echo ""
 echo -e "${BLUE}📥 克隆私密配置仓库...${NC}"
 
@@ -172,7 +178,7 @@ fi
 
 cd "$CONFIG_DIR/darwin"
 
-# 步骤7: 收集用户配置信息
+# 步骤6: 收集用户配置信息
 echo ""
 echo -e "${CYAN}========================================${NC}"
 echo -e "${CYAN}📝 配置信息收集${NC}"
@@ -263,7 +269,7 @@ else
 fi
 echo ""
 
-# 步骤8: 生成配置文件
+# 步骤7: 生成配置文件
 echo ""
 echo -e "${CYAN}========================================${NC}"
 echo -e "${CYAN}📄 生成配置文件${NC}"
@@ -405,7 +411,7 @@ if [[ $REPLY =~ ^[Nn]$ ]]; then
     read -p "$(echo -e ${GREEN}编辑完成后按回车继续...${NC})"
 fi
 
-# 步骤9: 执行首次部署
+# 步骤8: 执行首次部署
 echo ""
 echo -e "${BLUE}========================================${NC}"
 echo -e "${BLUE}🎯 开始完整系统部署${NC}"
@@ -424,7 +430,7 @@ else
     nix run nix-darwin -- switch --flake ".#${USER_HOSTNAME}"
 fi
 
-# 步骤10: 完成
+# 步骤9: 完成
 echo ""
 echo -e "${GREEN}========================================${NC}"
 echo -e "${GREEN}✅ 部署完成！${NC}"

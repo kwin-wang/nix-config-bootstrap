@@ -519,6 +519,43 @@ if [[ $REPLY =~ ^[Nn]$ ]]; then
     read -p "$(echo -e ${GREEN}编辑完成后按回车继续...${NC})"
 fi
 
+# 步骤7.5: 确保 agenix age 私钥存在（首次部署前的解密前置）
+echo ""
+echo -e "${CYAN}========================================${NC}"
+echo -e "${CYAN}🔑 检查 agenix age 私钥${NC}"
+echo -e "${CYAN}========================================${NC}"
+echo ""
+
+AGENIX_KEY="/var/lib/agenix/key.txt"
+# 以普通用户解析 age 二进制（nix 已安装），再用绝对路径在 sudo 下调用，
+# 避免依赖 root 的 nix 环境。
+AGE_BIN="$(nix build --no-link --print-out-paths \
+    --extra-experimental-features 'nix-command flakes' nixpkgs#age)/bin"
+
+if sudo test -f "$AGENIX_KEY"; then
+    echo -e "${GREEN}✓ 已存在 age 私钥：${AGENIX_KEY}${NC}"
+else
+    echo -e "${YELLOW}未找到 age 私钥，正在生成（仅存本机、永不进 git，用于运行时解密 agenix 密钥）...${NC}"
+    sudo mkdir -p /var/lib/agenix
+    sudo "$AGE_BIN/age-keygen" -o "$AGENIX_KEY" 2>/dev/null
+    sudo chmod 0400 "$AGENIX_KEY"
+    sudo chown root:wheel "$AGENIX_KEY"
+    echo -e "${GREEN}✓ 已生成：${AGENIX_KEY}（0400, root:wheel）${NC}"
+fi
+
+echo ""
+echo -e "${CYAN}该机器的 age 公钥（登记为 secrets.nix 收件人）：${NC}"
+AGE_PUB="$(sudo "$AGE_BIN/age-keygen" -y "$AGENIX_KEY" 2>/dev/null)"
+echo -e "${GREEN}  ${AGE_PUB}${NC}"
+echo ""
+echo -e "${YELLOW}若本机需要密钥（AI / GitLab 等），请在部署前完成：${NC}"
+echo "  1) 把上面的公钥加入 nix-config 的 secrets.nix 收件人"
+echo "  2) just reseal-template  →  填入真实值  →  just reseal-secrets secrets/<host>.env"
+echo "  3) 在 hosts/<host>.nix 声明 age.secrets（参考 hosts/NJXDGD03021.nix）"
+echo -e "${YELLOW}   否则：host 若已声明 age.secrets 但缺对应密文，部署会在解密处失败。${NC}"
+echo -e "${CYAN}   细节见 nix-config 的 docs/AI-TOOLS-GUIDE.md 与 docs/adr/0002-agenix-secret-seam.md。${NC}"
+echo ""
+
 # 步骤8: 执行首次部署
 echo ""
 echo -e "${BLUE}========================================${NC}"
